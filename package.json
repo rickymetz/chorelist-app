@@ -1,0 +1,12 @@
+{
+  "name": "home-checklist",
+  "version": "1.0.0",
+  "description": "Weekly printable household chore checklist",
+  "scripts": {
+    "start": "npx live-server --port=3000 --open=index.html"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
+
