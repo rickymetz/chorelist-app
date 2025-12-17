@@ -1766,10 +1766,15 @@ td {
   /* Monthly grid print */
   .monthly-grid {
     background: #f0ede8 !important;
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .monthly-grid-item {
     background: white !important;
+  }
+
+  .monthly-grid-item.blank {
+    grid-column: span 1 !important;
   }
 
   /* Notes print */

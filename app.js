@@ -1183,6 +1183,8 @@ function handleDrop(e) {
   saveState();
   renderSectionChores(page, section);
   renderPrintablePages();
+  // Reattach event listeners after DOM is recreated
+  attachSectionEventListeners(page);
   
   targetLi.classList.remove('drag-over');
 }
@@ -1457,14 +1459,19 @@ function attachSectionEventListeners(page) {
   // Remove chore buttons
   document.querySelectorAll(`.remove-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const sectionId = e.target.dataset.sectionId;
-      const index = parseInt(e.target.dataset.index);
+      e.stopPropagation(); // Prevent event bubbling
+      // Use currentTarget (the button) instead of target (might be a child element)
+      const button = e.currentTarget;
+      const sectionId = button.dataset.sectionId;
+      const index = parseInt(button.dataset.index);
       const section = page.sections.find(s => s.id === sectionId);
       if (section) {
         section.chores.splice(index, 1);
         saveState();
         renderSectionChores(page, section);
         renderPrintablePages();
+        // Reattach event listeners after DOM is recreated
+        attachSectionEventListeners(page);
       }
     });
   });
@@ -1472,12 +1479,15 @@ function attachSectionEventListeners(page) {
   // Edit chore buttons
   document.querySelectorAll(`.edit-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const sectionId = e.target.dataset.sectionId;
-      const index = parseInt(e.target.dataset.index);
+      e.stopPropagation(); // Prevent event bubbling
+      // Use currentTarget (the button) instead of target (might be a child element)
+      const button = e.currentTarget;
+      const sectionId = button.dataset.sectionId;
+      const index = parseInt(button.dataset.index);
       const section = page.sections.find(s => s.id === sectionId);
       if (!section) return;
       
-      const li = e.target.closest('li');
+      const li = button.closest('li');
       const choreText = li.querySelector('.chore-text');
       const currentText = section.chores[index];
       
@@ -1501,17 +1511,25 @@ function attachSectionEventListeners(page) {
         }
         renderSectionChores(page, section);
         renderPrintablePages();
+        // Reattach event listeners after DOM is recreated
+        attachSectionEventListeners(page);
       };
       
       choreText.querySelector('.save-edit-btn').addEventListener('click', saveEdit);
       choreText.querySelector('.cancel-edit-btn').addEventListener('click', () => {
         renderSectionChores(page, section);
+        // Reattach event listeners after DOM is recreated
+        attachSectionEventListeners(page);
       });
       editInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') saveEdit();
       });
       editInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') renderSectionChores(page, section);
+        if (e.key === 'Escape') {
+          renderSectionChores(page, section);
+          // Reattach event listeners after DOM is recreated
+          attachSectionEventListeners(page);
+        }
       });
     });
   });
