@@ -37,4 +37,3 @@ The app will be available at `http://localhost:3000`.
 - LocalStorage for persistence
 - URL parameters for sharing
 - Print-optimized CSS
-
