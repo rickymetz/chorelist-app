@@ -1,4 +1,4 @@
-# ChoreList Manager
+# Home Checklist
 
 A printable household chore checklist generator with customizable daily, weekly, and monthly sections.
 
