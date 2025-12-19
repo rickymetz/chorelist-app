@@ -185,7 +185,7 @@ function updateUrlWithState() {
     const compressSections = (sections) => {
       return sections.map(s => {
         const compressed = [];
-        // Use array format: [type, title?, subtitle?, chores?, doubleColumn?, lineCount?, blankRows?]
+        // Use array format: [type, title?, subtitle?, chores?, doubleColumn?, lineCount?, blankRows?, hideCheckboxes?]
         compressed[0] = typeMap[s.type] || s.type;
         if (s.title) compressed[1] = s.title;
         if (s.subtitle) compressed[2] = s.subtitle;
@@ -193,6 +193,7 @@ function updateUrlWithState() {
         if (s.doubleColumn !== undefined && s.type !== 'weekly') compressed[4] = s.doubleColumn;
         if (s.lineCount !== undefined && s.lineCount !== 5) compressed[5] = s.lineCount;
         if (s.blankRows !== undefined && s.blankRows !== 0) compressed[6] = s.blankRows;
+        if (s.hideCheckboxes !== undefined && s.hideCheckboxes) compressed[7] = s.hideCheckboxes;
         // Remove trailing undefined values
         while (compressed.length > 0 && compressed[compressed.length - 1] === undefined) {
           compressed.pop();
@@ -271,7 +272,7 @@ function loadStateFromUrl() {
         title = urlData[idx++];
       }
       if (typeof urlData[idx] === 'number' && urlData[idx] !== 10) {
-        baseSize = urlData[idx++];
+        baseSize = Math.max(6, urlData[idx++] || 10);
       }
       if (typeof urlData[idx] === 'number' && urlData[idx] !== 1.250) {
         scaleRatio = urlData[idx++];
@@ -282,7 +283,7 @@ function loadStateFromUrl() {
       // Old object format (backward compatibility)
       weekStartDay = urlData.w !== undefined ? urlData.w : 1;
       title = urlData.t || 'Home Checklist';
-      baseSize = urlData.b || 10;
+      baseSize = Math.max(6, urlData.b || 10);
       scaleRatio = urlData.r || 1.250;
       sections = urlData.s;
       months = urlData.m;
@@ -295,10 +296,10 @@ function loadStateFromUrl() {
     const decompressSections = (compressed) => {
       if (!compressed || !Array.isArray(compressed)) return DEFAULT_SECTIONS;
       return compressed.map((s, idx) => {
-        let type, title, subtitle, chores, doubleColumn, lineCount, blankRows;
+        let type, title, subtitle, chores, doubleColumn, lineCount, blankRows, hideCheckboxes;
         
         if (Array.isArray(s)) {
-          // New array format: [type, title?, subtitle?, chores?, doubleColumn?, lineCount?, blankRows?]
+          // New array format: [type, title?, subtitle?, chores?, doubleColumn?, lineCount?, blankRows?, hideCheckboxes?]
           type = typeReverseMap[s[0]] || s[0];
           title = s[1];
           subtitle = s[2];
@@ -306,6 +307,7 @@ function loadStateFromUrl() {
           doubleColumn = s[4];
           lineCount = s[5];
           blankRows = s[6];
+          hideCheckboxes = s[7];
         } else {
           // Old object format
           type = typeReverseMap[s.t] || s.t || 'daily';
@@ -315,6 +317,7 @@ function loadStateFromUrl() {
           doubleColumn = s.dc;
           lineCount = s.lc;
           blankRows = s.br;
+          hideCheckboxes = s.hc;
         }
         
         const section = {
@@ -335,6 +338,8 @@ function loadStateFromUrl() {
         
         if (blankRows !== undefined) section.blankRows = blankRows;
         else if (section.type === 'monthly') section.blankRows = 0;
+        
+        if (hideCheckboxes !== undefined) section.hideCheckboxes = hideCheckboxes;
         
         return section;
       });
@@ -363,7 +368,7 @@ function loadStateFromUrl() {
       id: `page-${idx + 1}`,
       title: title,
       month: month,
-      baseSize: baseSize,
+      baseSize: Math.max(6, baseSize),
       scaleRatio: scaleRatio,
       sections: decompressSections(sections)
     }));
@@ -434,6 +439,13 @@ function generateMarkdown() {
         weeks.forEach(() => md += ' ☐ |');
         md += '\n';
       });
+      // Add blank rows
+      const blankRows = section.blankRows || 0;
+      for (let i = 0; i < blankRows; i++) {
+        md += '| |';
+        weeks.forEach(() => md += ' ☐ |');
+        md += '\n';
+      }
       md += '\n';
       
     } else if (section.type === 'daily') {
@@ -475,6 +487,15 @@ function generateMarkdown() {
           });
           md += '\n';
         });
+        // Add blank rows
+        const blankRows = section.blankRows || 0;
+        for (let i = 0; i < blankRows; i++) {
+          md += '| |';
+          week.days.forEach(day => {
+            md += day.inMonth ? ' ☐ |' : ' - |';
+          });
+          md += '\n';
+        }
         md += '\n';
       });
       
@@ -538,10 +559,15 @@ function loadState() {
     
     if (saved.pages && saved.pages.length > 0) {
       state.pages = saved.pages;
-      // Find highest IDs for counters
+      // Find highest IDs for counters and ensure baseSize minimum
       state.pages.forEach(page => {
         const pageNum = parseInt(page.id.split('-')[1]) || 0;
         if (pageNum >= pageIdCounter) pageIdCounter = pageNum + 1;
+        
+        // Ensure baseSize is at least 6
+        if (page.baseSize !== undefined) {
+          page.baseSize = Math.max(6, page.baseSize);
+        }
         
         page.sections.forEach(s => {
           const num = parseInt(s.id.split('-')[1]) || 0;
@@ -554,7 +580,7 @@ function loadState() {
         id: 'page-1',
         title: saved.title || 'Home Checklist',
         month: saved.startMonth || new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
-        baseSize: saved.baseSize || 10,
+        baseSize: Math.max(6, saved.baseSize || 10),
         scaleRatio: saved.scaleRatio || 1.250,
         sections: saved.sections
       }];
@@ -575,8 +601,10 @@ function loadState() {
 // ========================================
 
 function generateSingleColumnDaily(section, weeks, weekCount) {
+  const blankRows = section.blankRows || 0;
+  const hideCheckboxes = section.hideCheckboxes || false;
   return `
-    <table class="daily-table">
+    <table class="daily-table ${hideCheckboxes ? 'hide-checkboxes' : ''}">
       <thead>
         <tr>
           <th class="chore-name-col">Chore</th>
@@ -590,6 +618,22 @@ function generateSingleColumnDaily(section, weeks, weekCount) {
           ${weeks.map((week, weekIdx) => `
             <tr class="${weekIdx > 0 ? 'week-row' : ''}">
               ${weekIdx === 0 ? `<td class="chore-name" rowspan="${weekCount}">${chore}</td>` : ''}
+              ${week.days.map(day => `
+                <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
+                  ${day.inMonth ? `
+                    <span class="check-area">
+                      <span class="day-num">${day.date.getDate()}</span><span class="checkbox"></span>
+                    </span>
+                  ` : ''}
+                </td>
+              `).join('')}
+            </tr>
+          `).join('')}
+        `).join('')}
+        ${Array(blankRows).fill('').map(() => `
+          ${weeks.map((week, weekIdx) => `
+            <tr class="${weekIdx > 0 ? 'week-row' : ''}">
+              ${weekIdx === 0 ? `<td class="chore-name blank-chore" rowspan="${weekCount}"></td>` : ''}
               ${week.days.map(day => `
                 <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
                   ${day.inMonth ? `
@@ -617,12 +661,14 @@ function generateDoubleColumnDaily(section, weeks, weekCount) {
   }
   
   const dayHeaders = getDayHeaders();
+  const blankRows = section.blankRows || 0;
+  const hideCheckboxes = section.hideCheckboxes || false;
   
   // Generate colgroup for explicit column widths
   const dayCols = Array(7).fill('<col style="width: 5.5%">').join('');
   
   return `
-    <table class="daily-table double-column">
+    <table class="daily-table double-column ${hideCheckboxes ? 'hide-checkboxes' : ''}">
       <colgroup>
         <col style="width: 11%">
         ${dayCols}
@@ -668,18 +714,47 @@ function generateDoubleColumnDaily(section, weeks, weekCount) {
             </tr>
           `).join('');
         }).join('')}
+        ${Array(blankRows).fill('').map(() => `
+          ${weeks.map((week, weekIdx) => `
+            <tr class="${weekIdx > 0 ? 'week-row' : ''}">
+              ${weekIdx === 0 ? `<td class="chore-name blank-chore" rowspan="${weekCount}"></td>` : ''}
+              ${week.days.map(day => `
+                <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
+                  ${day.inMonth ? `
+                    <span class="check-area">
+                      <span class="day-num">${day.date.getDate()}</span><span class="checkbox"></span>
+                    </span>
+                  ` : ''}
+                </td>
+              `).join('')}
+              ${weekIdx === 0 ? `<td class="column-separator" rowspan="${weekCount}"></td>` : ''}
+              ${weekIdx === 0 ? `<td class="chore-name blank-chore" rowspan="${weekCount}"></td>` : ''}
+              ${week.days.map(day => `
+                <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
+                  ${day.inMonth ? `
+                    <span class="check-area">
+                      <span class="day-num">${day.date.getDate()}</span><span class="checkbox"></span>
+                    </span>
+                  ` : ''}
+                </td>
+              `).join('')}
+            </tr>
+          `).join('')}
+        `).join('')}
       </tbody>
     </table>
   `;
 }
 
 function generateWeeklySection(section, weeks) {
+  const blankRows = section.blankRows || 0;
+  const hideCheckboxes = section.hideCheckboxes || false;
   return `
     <section class="chore-section weekly-section">
       <div class="section-header">
         <h2><strong>${section.title}</strong> <em>${section.subtitle}</em></h2>
       </div>
-      <table class="weekly-table">
+      <table class="weekly-table ${hideCheckboxes ? 'hide-checkboxes' : ''}">
         <thead>
           <tr>
             <th class="chore-name-col">Chore</th>
@@ -697,6 +772,14 @@ function generateWeeklySection(section, weeks) {
           ${section.chores.map(chore => `
             <tr>
               <td class="chore-name">${chore}</td>
+              ${weeks.map(() => `
+                <td class="check-cell"><span class="check-area"></span></td>
+              `).join('')}
+            </tr>
+          `).join('')}
+          ${Array(blankRows).fill('').map(() => `
+            <tr>
+              <td class="chore-name blank-chore"></td>
               ${weeks.map(() => `
                 <td class="check-cell"><span class="check-area"></span></td>
               `).join('')}
@@ -753,6 +836,7 @@ function generateNotesSection(section) {
 function generateMonthlySection(section) {
   const subtitleHtml = section.subtitle ? ` <em>${section.subtitle}</em>` : '';
   const blankRows = section.blankRows || 0;
+  const hideCheckboxes = section.hideCheckboxes || false;
   
   if (section.doubleColumn) {
     // Multi-column grid layout
@@ -776,7 +860,7 @@ function generateMonthlySection(section) {
         <div class="section-header">
           <h2><strong>${section.title}</strong>${subtitleHtml}</h2>
         </div>
-        <div class="monthly-grid">
+        <div class="monthly-grid ${hideCheckboxes ? 'hide-checkboxes' : ''}">
           ${gridItems}
           ${blankGridItems}
         </div>
@@ -805,11 +889,11 @@ function generateMonthlySection(section) {
       <div class="section-header">
         <h2><strong>${section.title}</strong>${subtitleHtml}</h2>
       </div>
-      <table class="monthly-table">
+      <table class="monthly-table ${hideCheckboxes ? 'hide-checkboxes' : ''}">
         <thead>
           <tr>
             <th class="monthly-goal-col">Goal</th>
-            <th class="monthly-check-col">☐</th>
+            <th class="monthly-check-col">${hideCheckboxes ? '' : '☐'}</th>
           </tr>
         </thead>
         <tbody>
@@ -832,7 +916,7 @@ function generatePrintablePage(page) {
   div.dataset.pageId = page.id;
   
   // Apply page-specific type scale as inline styles
-  const base = page.baseSize;
+  const base = Math.max(6, page.baseSize || 10);
   const ratio = page.scaleRatio;
   const typeSmall = base / ratio;
   const typeBase = base;
@@ -1062,6 +1146,13 @@ function renderPageSections(page) {
           <label>Blank rows:</label>
           <input type="number" class="blank-rows-input" data-page-id="${page.id}" data-section-id="${section.id}" value="${section.blankRows || 0}" min="0" max="20">
         </div>
+        <div class="notes-option-item">
+          <label>Hide checkboxes:</label>
+          <label class="toggle-switch">
+            <input type="checkbox" class="hide-checkboxes-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.hideCheckboxes ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
         <ul class="section-chore-list" data-page-id="${page.id}" data-section-id="${section.id}"></ul>
         <div class="inline-adder">
           <input type="text" class="chore-input" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Add goal...">
@@ -1080,6 +1171,29 @@ function renderPageSections(page) {
               <span class="toggle-slider"></span>
             </label>
             <span class="layout-icon" title="Double column">▥</span>
+          </div>
+          <div class="notes-option-item">
+            <label>Blank calendars:</label>
+            <input type="number" class="blank-rows-input" data-page-id="${page.id}" data-section-id="${section.id}" value="${section.blankRows || 0}" min="0" max="20">
+          </div>
+          <div class="notes-option-item">
+            <label>Hide checkboxes:</label>
+            <label class="toggle-switch">
+              <input type="checkbox" class="hide-checkboxes-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.hideCheckboxes ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        ` : section.type === 'weekly' ? `
+          <div class="notes-option-item">
+            <label>Blank rows:</label>
+            <input type="number" class="blank-rows-input" data-page-id="${page.id}" data-section-id="${section.id}" value="${section.blankRows || 0}" min="0" max="20">
+          </div>
+          <div class="notes-option-item">
+            <label>Hide checkboxes:</label>
+            <label class="toggle-switch">
+              <input type="checkbox" class="hide-checkboxes-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.hideCheckboxes ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         ` : ''}
         <ul class="section-chore-list" data-page-id="${page.id}" data-section-id="${section.id}"></ul>
@@ -1229,7 +1343,9 @@ function attachPageCardEventListeners() {
   // Page base size input
   document.querySelectorAll('.page-base-size').forEach(input => {
     input.addEventListener('input', (e) => {
-      masterPage.baseSize = parseFloat(e.target.value) || 10;
+      const value = Math.max(6, parseFloat(e.target.value) || 10);
+      masterPage.baseSize = value;
+      e.target.value = value; // Update input to show clamped value
       syncToAllPages();
       saveState();
       renderPrintablePages();
@@ -1421,6 +1537,18 @@ function attachSectionEventListeners(page) {
     });
   });
   
+  // Hide checkboxes toggles
+  document.querySelectorAll(`.hide-checkboxes-toggle[data-page-id="${pageId}"]`).forEach(toggle => {
+    toggle.addEventListener('change', (e) => {
+      const section = page.sections.find(s => s.id === e.target.dataset.sectionId);
+      if (section) {
+        section.hideCheckboxes = e.target.checked;
+        saveState();
+        renderPrintablePages();
+      }
+    });
+  });
+  
   // Add chore buttons
   document.querySelectorAll(`.add-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1535,10 +1663,31 @@ function attachSectionEventListeners(page) {
   });
 }
 
+// Month picker state and functions (defined globally for accessibility)
+let monthPickerElements = null;
+let currentPickerYear = new Date().getFullYear();
+let currentPickerMonth = new Date().getMonth() + 1;
+
+function updateMonthPickerDisplay() {
+  if (!monthPickerElements) return;
+  const { monthDisplay } = monthPickerElements;
+  
+  if (state.pages.length > 0) {
+    const [year, month] = state.pages[0].month.split('-').map(Number);
+    currentPickerYear = year;
+    currentPickerMonth = month;
+    
+    const date = new Date(year, month - 1, 1);
+    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+    monthDisplay.textContent = `${monthName} ${year}`;
+  }
+}
+
 function renderAll() {
   renderPrintablePages();
   renderPageHint();
   renderPageCards();
+  updateMonthPickerDisplay();
 }
 
 // ========================================
@@ -1684,7 +1833,7 @@ function setupEventListeners() {
         id: `page-${pageNum}`,
         title: 'Home Checklist',
         month: monthStr,
-        baseSize: state.pages[0]?.baseSize || 10,
+        baseSize: Math.max(6, state.pages[0]?.baseSize || 10),
         scaleRatio: state.pages[0]?.scaleRatio || 1.250,
         sections: JSON.parse(JSON.stringify(state.pages[0]?.sections || DEFAULT_SECTIONS))
       });
@@ -1700,27 +1849,113 @@ function setupEventListeners() {
     state.pages = newPages;
     pageIdCounter = pageNum;
     
-    // Update month select to show first page's month
-    monthSelect.value = state.pages[0].month;
+    // Update month picker display
+    updateMonthPickerDisplay();
     
     saveState();
     renderAll();
   });
 
-  // Starting month picker - sets month for first page and updates subsequent pages
-  const monthSelect = document.getElementById('month-select');
-  if (state.pages.length > 0) {
-    monthSelect.value = state.pages[0].month;
-  }
-  monthSelect.addEventListener('change', (e) => {
-    const [year, month] = e.target.value.split('-').map(Number);
-    state.pages.forEach((page, idx) => {
-      const targetDate = new Date(year, month - 1 + idx, 1);
-      page.month = targetDate.getFullYear() + '-' + String(targetDate.getMonth() + 1).padStart(2, '0');
+  // Custom Month Picker
+  monthPickerElements = {
+    trigger: document.getElementById('month-select-trigger'),
+    popup: document.getElementById('month-picker-popup'),
+    monthDisplay: document.getElementById('month-display'),
+    monthPickerYear: document.getElementById('month-picker-year'),
+    monthPickerGrid: document.getElementById('month-picker-grid'),
+    yearPrevBtn: document.getElementById('year-prev'),
+    yearNextBtn: document.getElementById('year-next')
+  };
+  
+  const { trigger, popup, monthDisplay, monthPickerYear, monthPickerGrid, yearPrevBtn, yearNextBtn } = monthPickerElements;
+  
+  // Render month grid
+  function renderMonthGrid() {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    monthPickerYear.textContent = currentPickerYear;
+    
+    // Get current selected month from state
+    let selectedYear = currentPickerYear;
+    let selectedMonth = currentPickerMonth;
+    if (state.pages.length > 0) {
+      const [year, month] = state.pages[0].month.split('-').map(Number);
+      selectedYear = year;
+      selectedMonth = month;
+    }
+    
+    monthPickerGrid.innerHTML = '';
+    months.forEach((monthName, index) => {
+      const monthBtn = document.createElement('button');
+      monthBtn.type = 'button';
+      monthBtn.className = 'month-picker-month';
+      monthBtn.textContent = monthName;
+      if (currentPickerYear === selectedYear && (index + 1) === selectedMonth) {
+        monthBtn.classList.add('selected');
+      }
+      
+      monthBtn.addEventListener('click', () => {
+        const selectedMonth = index + 1;
+        
+        // Update all pages
+        state.pages.forEach((page, idx) => {
+          const targetDate = new Date(currentPickerYear, selectedMonth - 1 + idx, 1);
+          page.month = targetDate.getFullYear() + '-' + String(targetDate.getMonth() + 1).padStart(2, '0');
+        });
+        
+        currentPickerMonth = selectedMonth;
+        updateMonthPickerDisplay();
+        popup.style.display = 'none';
+        trigger.classList.remove('open');
+        saveState();
+        renderAll();
+      });
+      
+      monthPickerGrid.appendChild(monthBtn);
     });
-    saveState();
-    renderAll();
+  }
+  
+  // Toggle popup
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = popup.style.display !== 'none';
+    if (isOpen) {
+      popup.style.display = 'none';
+      trigger.classList.remove('open');
+    } else {
+      // Sync picker year with current selection
+      if (state.pages.length > 0) {
+        const [year] = state.pages[0].month.split('-').map(Number);
+        currentPickerYear = year;
+      }
+      renderMonthGrid();
+      popup.style.display = 'block';
+      trigger.classList.add('open');
+    }
   });
+  
+  // Year navigation
+  yearPrevBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentPickerYear--;
+    renderMonthGrid();
+  });
+  
+  yearNextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentPickerYear++;
+    renderMonthGrid();
+  });
+  
+  // Close popup when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!trigger.contains(e.target) && !popup.contains(e.target)) {
+      popup.style.display = 'none';
+      trigger.classList.remove('open');
+    }
+  });
+  
+  // Initialize display
+  updateMonthPickerDisplay();
 
   // Share button
   document.getElementById('share-btn').addEventListener('click', copyShareLink);
@@ -1741,7 +1976,7 @@ function setupEventListeners() {
       pageIdCounter = 2;
       sectionIdCounter = 2;
       weekStartDaySelect.value = state.weekStartDay;
-      monthSelect.value = state.pages[0].month;
+      updateMonthPickerDisplay();
       saveState();
       renderAll();
     }
