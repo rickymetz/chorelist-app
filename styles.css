@@ -121,11 +121,6 @@ body {
   border-color: var(--accent);
 }
 
-.month-display {
-  flex: 1;
-  text-align: left;
-}
-
 .month-picker-icon {
   width: 0;
   height: 0;
@@ -533,7 +528,7 @@ body {
   padding: 0.5rem 0.625rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  text-align: center;
+  text-align: left;
 }
 
 /* Chore sections area */
@@ -1388,8 +1383,12 @@ body {
 }
 
 .page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1rem;
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin: 0 auto 0.5rem auto;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--ink);
 }
