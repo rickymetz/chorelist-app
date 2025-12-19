@@ -4,12 +4,12 @@
   "description": "Printable household chore checklist generator",
   "icons": [
     {
-      "src": "/chorelist-app/android-chrome-192x192.png",
+      "src": "/chorelist-app/assets/icons/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/chorelist-app/android-chrome-512x512.png",
+      "src": "/chorelist-app/assets/icons/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
