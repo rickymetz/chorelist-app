@@ -6,7 +6,7 @@
   <rect x="60" y="60" width="1080" height="510" fill="none" stroke="#d4cfc6" stroke-width="3" rx="12"/>
   
   <!-- Title -->
-  <text x="600" y="200" font-family="Georgia, serif" font-size="72" font-weight="600" fill="#1a1a1a" text-anchor="middle">Home Checklist</text>
+  <text x="600" y="200" font-family="Georgia, serif" font-size="72" font-weight="600" fill="#1a1a1a" text-anchor="middle">ChoreList Manager</text>
   
   <!-- Subtitle -->
   <text x="600" y="270" font-family="Georgia, serif" font-size="32" fill="#4a4a4a" text-anchor="middle">Printable Chore Checklist Generator</text>

@@ -1,6 +1,6 @@
 {
-  "name": "Home Checklist",
-  "short_name": "Checklist",
+  "name": "ChoreList Manager",
+  "short_name": "ChoreList",
   "description": "Printable household chore checklist generator",
   "icons": [
     {

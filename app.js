@@ -1,5 +1,5 @@
 // ========================================
-// Home Checklist App - Multi-Page Edition
+// ChoreList Manager - Multi-Page Edition
 // ========================================
 
 // Default sections for a new page
@@ -65,7 +65,7 @@ function createDefaultPage(id, monthOffset = 0) {
   
   return {
     id: id,
-    title: 'Home Checklist',
+    title: 'ChoreList Manager',
     month: monthStr,
     baseSize: 10,
     scaleRatio: 1.250,
@@ -211,7 +211,7 @@ function updateUrlWithState() {
     // Use array format: [weekStartDay?, title?, baseSize?, scaleRatio?, sections, months]
     let idx = 0;
     if (state.weekStartDay !== 1) urlData[idx++] = state.weekStartDay;
-    if (master.title !== 'Home Checklist') urlData[idx++] = master.title;
+    if (master.title !== 'ChoreList Manager') urlData[idx++] = master.title;
     if (master.baseSize !== 10) urlData[idx++] = master.baseSize;
     if (master.scaleRatio !== 1.250) urlData[idx++] = master.scaleRatio;
     urlData[idx++] = compressSections(master.sections);
@@ -260,7 +260,7 @@ function loadStateFromUrl() {
     
     // Detect format: array format [weekStartDay?, title?, baseSize?, scaleRatio?, sections, months]
     const isArrayFormat = Array.isArray(urlData);
-    let weekStartDay = 1, title = 'Home Checklist', baseSize = 10, scaleRatio = 1.250, sections, months;
+    let weekStartDay = 1, title = 'ChoreList Manager', baseSize = 10, scaleRatio = 1.250, sections, months;
     
     if (isArrayFormat) {
       // New ultra-compact array format
@@ -282,7 +282,7 @@ function loadStateFromUrl() {
     } else {
       // Old object format (backward compatibility)
       weekStartDay = urlData.w !== undefined ? urlData.w : 1;
-      title = urlData.t || 'Home Checklist';
+      title = urlData.t || 'ChoreList Manager';
       baseSize = Math.max(6, urlData.b || 10);
       scaleRatio = urlData.r || 1.250;
       sections = urlData.s;
@@ -578,7 +578,7 @@ function loadState() {
       // Migrate from old single-page format
       state.pages = [{
         id: 'page-1',
-        title: saved.title || 'Home Checklist',
+        title: saved.title || 'ChoreList Manager',
         month: saved.startMonth || new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
         baseSize: Math.max(6, saved.baseSize || 10),
         scaleRatio: saved.scaleRatio || 1.250,
@@ -1333,7 +1333,7 @@ function attachPageCardEventListeners() {
   // Page title input
   document.querySelectorAll('.page-title-input').forEach(input => {
     input.addEventListener('input', (e) => {
-      masterPage.title = e.target.value || 'Home Checklist';
+      masterPage.title = e.target.value || 'ChoreList Manager';
       syncToAllPages();
       saveState();
       renderPrintablePages();
@@ -1831,7 +1831,7 @@ function setupEventListeners() {
       const monthStr = year + '-' + String(month + 1).padStart(2, '0');
       newPages.push({
         id: `page-${pageNum}`,
-        title: 'Home Checklist',
+        title: 'ChoreList Manager',
         month: monthStr,
         baseSize: Math.max(6, state.pages[0]?.baseSize || 10),
         scaleRatio: state.pages[0]?.scaleRatio || 1.250,
