@@ -2059,3 +2059,16 @@ td {
 .share-banner-btn.primary { background: #f0d97a; }
 .share-banner-btn:hover { background: #f7e9a8; }
 
+
+.library-link {
+  font: inherit; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px;
+  text-decoration: none; color: inherit; background: #fff;
+}
+.library-link:hover { background: #f5f5f5; }
+.entry-chip {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  padding: 6px 10px; border: 1px dashed #bbb; border-radius: 4px; cursor: text;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.entry-chip[data-saved="true"] { border-style: solid; border-color: #888; }
+.entry-chip:focus { outline: 2px solid #6aa6ff; outline-offset: 1px; }

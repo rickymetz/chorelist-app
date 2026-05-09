@@ -2040,8 +2040,66 @@ function setupEventListeners() {
       weekStartDaySelect.value = state.weekStartDay;
       updateMonthPickerDisplay();
       saveState();
+      ChoreStorage.setCurrentId(null);
+      updateEditorTitleChip();
       renderAll();
     }
+  });
+
+  // Editor title chip + Save as
+  function updateEditorTitleChip() {
+    const chip = document.getElementById('entry-chip');
+    const nameEl = document.getElementById('entry-chip-name');
+    if (!chip || !nameEl) return;
+    const id = ChoreStorage.getCurrentId();
+    if (!id) {
+      chip.dataset.saved = 'false';
+      nameEl.textContent = 'Untitled draft';
+      return;
+    }
+    const row = ChoreStorage.getIndex().find(r => r.id === id);
+    chip.dataset.saved = 'true';
+    nameEl.textContent = row ? row.name : 'Untitled';
+  }
+  window.updateEditorTitleChip = updateEditorTitleChip;
+
+  document.getElementById('save-as-btn').addEventListener('click', () => {
+    const name = prompt('Name this checklist:');
+    if (!name) return;
+    const data = {
+      weekStartDay: state.weekStartDay,
+      pages: state.pages,
+      multiPageView: state.multiPageView,
+    };
+    const id = ChoreStorage.createEntry(name.trim(), data);
+    ChoreStorage.setCurrentId(id);
+    updateEditorTitleChip();
+  });
+
+  const chipEl = document.getElementById('entry-chip');
+  chipEl.addEventListener('click', () => {
+    const id = ChoreStorage.getCurrentId();
+    if (!id) {
+      document.getElementById('save-as-btn').click();
+      return;
+    }
+    const nameEl = document.getElementById('entry-chip-name');
+    nameEl.contentEditable = 'true';
+    nameEl.focus();
+    document.execCommand && document.execCommand('selectAll', false, null);
+  });
+  const chipNameEl = document.getElementById('entry-chip-name');
+  chipNameEl.addEventListener('blur', (e) => {
+    e.target.contentEditable = 'false';
+    const id = ChoreStorage.getCurrentId();
+    const newName = e.target.textContent.trim();
+    if (!id) return;
+    if (!newName) { updateEditorTitleChip(); return; }
+    ChoreStorage.renameEntry(id, newName);
+  });
+  chipNameEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); updateEditorTitleChip(); e.target.blur(); }
   });
 
   // Zoom controls
@@ -2109,6 +2167,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadState();
   renderAll();
   setupEventListeners();
+  if (typeof window.updateEditorTitleChip === 'function') window.updateEditorTitleChip();
   // Initialize zoom state after everything is set up
   setTimeout(() => {
     const zoomSlider = document.getElementById('zoom-slider');
