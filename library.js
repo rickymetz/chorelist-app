@@ -30,6 +30,7 @@
     empty.hidden = idx.length > 0;
     grid.innerHTML = idx.map(card).join('');
     bindCardEvents();
+    if (window.lucide) lucide.createIcons();
   }
 
   function card(row) {
@@ -37,7 +38,7 @@
       <article class="lib-card" data-id="${row.id}">
         <header class="lib-card-head">
           <h2 class="lib-card-name" contenteditable="false" data-action="rename">${escapeHtml(row.name)}</h2>
-          <button class="lib-card-menu" data-action="menu" aria-label="More">⋯</button>
+          <button class="lib-card-menu" data-action="menu" aria-label="More"><i data-lucide="more-horizontal"></i></button>
         </header>
         <p class="lib-card-desc" contenteditable="false" data-action="describe"
            data-placeholder="Add description…">${escapeHtml(row.description || '')}</p>

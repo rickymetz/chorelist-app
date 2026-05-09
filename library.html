@@ -9,16 +9,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="vendor/lucide.min.js"></script>
 </head>
 <body class="library-page">
   <nav class="top-nav">
-    <h1 class="nav-title">📚 Library</h1>
+    <h1 class="nav-title"><i data-lucide="library"></i> Library</h1>
     <div class="nav-controls">
       <div class="nav-actions">
-        <a href="index.html" class="library-link">← Editor</a>
-        <button id="new-btn" class="print-btn">+ New checklist</button>
-        <button id="import-btn" class="seg-btn">⬆ Import</button>
-        <button id="export-btn" class="seg-btn">⬇ Export all</button>
+        <a href="index.html" class="library-link"><i data-lucide="arrow-left"></i> Editor</a>
+        <button id="new-btn" class="print-btn"><i data-lucide="plus"></i> New checklist</button>
+        <button id="import-btn" class="seg-btn"><i data-lucide="upload"></i> Import</button>
+        <button id="export-btn" class="seg-btn"><i data-lucide="download"></i> Export all</button>
         <input type="file" id="import-file" accept="application/json" hidden>
       </div>
     </div>

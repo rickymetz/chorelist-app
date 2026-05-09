@@ -170,7 +170,15 @@ function saveState() {
     multiPageView: state.multiPageView,
   };
   if (!state.shareBannerMode) {
-    ChoreStorage.saveWorking(data, ChoreStorage.getCurrentId());
+    const title = (state.pages[0] && state.pages[0].title || '').trim() || 'Home Checklist';
+    let id = ChoreStorage.getCurrentId();
+    if (!id) {
+      id = ChoreStorage.createEntry(title, data);
+      ChoreStorage.setCurrentId(id);
+    } else {
+      ChoreStorage.saveWorking(data, id);
+      ChoreStorage.renameEntry(id, title);
+    }
   }
   updateUrlWithState();
 }
@@ -391,10 +399,12 @@ function copyShareLink() {
   navigator.clipboard.writeText(url).then(() => {
     // Show brief feedback
     const btn = document.getElementById('share-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Copied!';
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check"></i> Copied!';
+    if (window.lucide) lucide.createIcons();
     setTimeout(() => {
-      btn.textContent = originalText;
+      btn.innerHTML = originalHTML;
+      if (window.lucide) lucide.createIcons();
     }, 2000);
   }).catch(err => {
     console.error('Failed to copy:', err);
@@ -540,10 +550,12 @@ function copyMarkdown() {
   const md = generateMarkdown();
   navigator.clipboard.writeText(md).then(() => {
     const btn = document.getElementById('copy-md-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Copied!';
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="check"></i> Copied!';
+    if (window.lucide) lucide.createIcons();
     setTimeout(() => {
-      btn.textContent = originalText;
+      btn.innerHTML = originalHTML;
+      if (window.lucide) lucide.createIcons();
     }, 2000);
   }).catch(err => {
     console.error('Failed to copy:', err);
@@ -1150,12 +1162,12 @@ function renderPageSections(page) {
     div.innerHTML = `
       <div class="section-header-row">
         <div class="section-order-btns">
-          <button class="section-move-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-direction="up" title="Move up" ${sectionIdx === 0 ? 'disabled' : ''}>▲</button>
-          <button class="section-move-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-direction="down" title="Move down" ${sectionIdx === page.sections.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="section-move-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-direction="up" title="Move up" ${sectionIdx === 0 ? 'disabled' : ''}><i data-lucide="chevron-up"></i></button>
+          <button class="section-move-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-direction="down" title="Move down" ${sectionIdx === page.sections.length - 1 ? 'disabled' : ''}><i data-lucide="chevron-down"></i></button>
         </div>
         <span class="section-order-num">${sectionIdx + 1}</span>
         <span class="section-type-badge ${section.type}">${section.type}</span>
-        <button class="section-delete-btn" data-page-id="${page.id}" data-section-id="${section.id}" title="Remove section">×</button>
+        <button class="section-delete-btn" data-page-id="${page.id}" data-section-id="${section.id}" title="Remove section"><i data-lucide="x"></i></button>
       </div>
       ${section.type === 'notes' ? `
         <div class="section-title-inputs">
@@ -1163,12 +1175,12 @@ function renderPageSections(page) {
           <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${section.subtitle || ''}">
         </div>
         <div class="section-options layout-toggle">
-          <span class="layout-icon" title="Single column">▤</span>
+          <span class="layout-icon" title="Single column"><i data-lucide="rectangle-vertical"></i></span>
           <label class="toggle-switch">
             <input type="checkbox" class="double-column-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.doubleColumn ? 'checked' : ''}>
             <span class="toggle-slider"></span>
           </label>
-          <span class="layout-icon" title="Double column">▥</span>
+          <span class="layout-icon" title="Double column"><i data-lucide="columns-2"></i></span>
         </div>
         <div class="notes-option-item">
           <label>Lines:</label>
@@ -1180,12 +1192,12 @@ function renderPageSections(page) {
           <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${section.subtitle || ''}">
         </div>
         <div class="section-options layout-toggle">
-          <span class="layout-icon" title="List">☰</span>
+          <span class="layout-icon" title="List"><i data-lucide="list"></i></span>
           <label class="toggle-switch">
             <input type="checkbox" class="double-column-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.doubleColumn ? 'checked' : ''}>
             <span class="toggle-slider"></span>
           </label>
-          <span class="layout-icon" title="Grid">▦</span>
+          <span class="layout-icon" title="Grid"><i data-lucide="grid-2x2"></i></span>
         </div>
         <div class="notes-option-item">
           <label>Blank rows:</label>
@@ -1210,12 +1222,12 @@ function renderPageSections(page) {
         </div>
         ${section.type === 'daily' ? `
           <div class="section-options layout-toggle">
-            <span class="layout-icon" title="Single column">▤</span>
+            <span class="layout-icon" title="Single column"><i data-lucide="rectangle-vertical"></i></span>
             <label class="toggle-switch">
               <input type="checkbox" class="double-column-toggle" data-page-id="${page.id}" data-section-id="${section.id}" ${section.doubleColumn ? 'checked' : ''}>
               <span class="toggle-slider"></span>
             </label>
-            <span class="layout-icon" title="Double column">▥</span>
+            <span class="layout-icon" title="Double column"><i data-lucide="columns-2"></i></span>
           </div>
           <div class="notes-option-item">
             <label>Blank calendars:</label>
@@ -1255,12 +1267,13 @@ function renderPageSections(page) {
       renderSectionChores(page, section);
     }
   });
+  if (window.lucide) lucide.createIcons();
 }
 
 function renderSectionChores(page, section) {
   const list = document.querySelector(`.section-chore-list[data-page-id="${page.id}"][data-section-id="${section.id}"]`);
   if (!list) return;
-  
+
   list.innerHTML = '';
   section.chores.forEach((chore, index) => {
     const li = document.createElement('li');
@@ -1269,22 +1282,83 @@ function renderSectionChores(page, section) {
     li.dataset.sectionId = section.id;
     li.dataset.index = index;
     li.innerHTML = `
-      <span class="drag-handle">⋮⋮</span>
+      <span class="drag-handle"><i data-lucide="grip-vertical"></i></span>
       <span class="chore-text">${chore}</span>
       <div class="chore-actions">
-        <button class="edit-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Edit">✎</button>
-        <button class="remove-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Remove">×</button>
+        <button class="edit-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Edit"><i data-lucide="pencil"></i></button>
+        <button class="remove-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Remove"><i data-lucide="x"></i></button>
       </div>
     `;
-    
+
     li.addEventListener('dragstart', handleDragStart);
     li.addEventListener('dragover', handleDragOver);
     li.addEventListener('dragenter', handleDragEnter);
     li.addEventListener('dragleave', handleDragLeave);
     li.addEventListener('drop', handleDrop);
     li.addEventListener('dragend', handleDragEnd);
-    
+
     list.appendChild(li);
+  });
+  attachChoreItemListeners(page, section);
+  if (window.lucide) lucide.createIcons();
+}
+
+// Attach edit/remove listeners only for the chores in one section. Used after
+// chore-list re-renders to avoid stacking listeners on section-level controls.
+function attachChoreItemListeners(page, section) {
+  const list = document.querySelector(`.section-chore-list[data-page-id="${page.id}"][data-section-id="${section.id}"]`);
+  if (!list) return;
+
+  list.querySelectorAll('.remove-chore-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(e.currentTarget.dataset.index);
+      section.chores.splice(idx, 1);
+      saveState();
+      renderSectionChores(page, section);
+      renderPrintablePages();
+    });
+  });
+
+  list.querySelectorAll('.edit-chore-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(e.currentTarget.dataset.index);
+      const li = e.currentTarget.closest('li');
+      const choreText = li.querySelector('.chore-text');
+      const currentText = section.chores[idx];
+
+      choreText.innerHTML = `
+        <input type="text" class="edit-chore-input" value="${currentText}">
+        <div class="edit-controls">
+          <button class="save-edit-btn"><i data-lucide="check"></i></button>
+          <button class="cancel-edit-btn"><i data-lucide="x"></i></button>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+
+      const editInput = choreText.querySelector('.edit-chore-input');
+      editInput.focus();
+      editInput.select();
+
+      const saveEdit = () => {
+        const newText = editInput.value.trim();
+        if (newText) {
+          section.chores[idx] = newText;
+          saveState();
+        }
+        renderSectionChores(page, section);
+        renderPrintablePages();
+      };
+
+      choreText.querySelector('.save-edit-btn').addEventListener('click', saveEdit);
+      choreText.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+        renderSectionChores(page, section);
+      });
+      editInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') saveEdit();
+      });
+    });
   });
 }
 
@@ -1342,9 +1416,7 @@ function handleDrop(e) {
   saveState();
   renderSectionChores(page, section);
   renderPrintablePages();
-  // Reattach event listeners after DOM is recreated
-  attachSectionEventListeners(page);
-  
+
   targetLi.classList.remove('drag-over');
 }
 
@@ -1384,7 +1456,7 @@ function attachPageCardEventListeners() {
       renderPrintablePages();
     });
   });
-  
+
   // Page base size input
   document.querySelectorAll('.page-base-size').forEach(input => {
     input.addEventListener('input', (e) => {
@@ -1494,8 +1566,8 @@ function attachSectionEventListeners(page) {
   // Section move buttons
   document.querySelectorAll(`.section-move-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const sectionId = e.target.dataset.sectionId;
-      const direction = e.target.dataset.direction;
+      const sectionId = e.currentTarget.dataset.sectionId;
+      const direction = e.currentTarget.dataset.direction;
       const idx = page.sections.findIndex(s => s.id === sectionId);
       
       if (direction === 'up' && idx > 0) {
@@ -1514,7 +1586,7 @@ function attachSectionEventListeners(page) {
   // Section delete buttons
   document.querySelectorAll(`.section-delete-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const sectionId = e.target.dataset.sectionId;
+      const sectionId = e.currentTarget.dataset.sectionId;
       page.sections = page.sections.filter(s => s.id !== sectionId);
       saveState();
       renderPageSections(page);
@@ -1597,7 +1669,7 @@ function attachSectionEventListeners(page) {
   // Add chore buttons
   document.querySelectorAll(`.add-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const sectionId = e.target.dataset.sectionId;
+      const sectionId = e.currentTarget.dataset.sectionId;
       const input = document.querySelector(`.chore-input[data-page-id="${pageId}"][data-section-id="${sectionId}"]`);
       if (input && input.value.trim()) {
         const section = page.sections.find(s => s.id === sectionId);
@@ -1611,7 +1683,7 @@ function attachSectionEventListeners(page) {
       }
     });
   });
-  
+
   // Chore input enter key
   document.querySelectorAll(`.chore-input[data-page-id="${pageId}"]`).forEach(input => {
     input.addEventListener('keypress', (e) => {
@@ -1628,84 +1700,10 @@ function attachSectionEventListeners(page) {
       }
     });
   });
-  
-  // Remove chore buttons
-  document.querySelectorAll(`.remove-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent event bubbling
-      // Use currentTarget (the button) instead of target (might be a child element)
-      const button = e.currentTarget;
-      const sectionId = button.dataset.sectionId;
-      const index = parseInt(button.dataset.index);
-      const section = page.sections.find(s => s.id === sectionId);
-      if (section) {
-        section.chores.splice(index, 1);
-        saveState();
-        renderSectionChores(page, section);
-        renderPrintablePages();
-        // Reattach event listeners after DOM is recreated
-        attachSectionEventListeners(page);
-      }
-    });
-  });
-  
-  // Edit chore buttons
-  document.querySelectorAll(`.edit-chore-btn[data-page-id="${pageId}"]`).forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent event bubbling
-      // Use currentTarget (the button) instead of target (might be a child element)
-      const button = e.currentTarget;
-      const sectionId = button.dataset.sectionId;
-      const index = parseInt(button.dataset.index);
-      const section = page.sections.find(s => s.id === sectionId);
-      if (!section) return;
-      
-      const li = button.closest('li');
-      const choreText = li.querySelector('.chore-text');
-      const currentText = section.chores[index];
-      
-      choreText.innerHTML = `
-        <input type="text" class="edit-chore-input" value="${currentText}">
-        <div class="edit-controls">
-          <button class="save-edit-btn">✓</button>
-          <button class="cancel-edit-btn">✕</button>
-        </div>
-      `;
-      
-      const editInput = choreText.querySelector('.edit-chore-input');
-      editInput.focus();
-      editInput.select();
-      
-      const saveEdit = () => {
-        const newText = editInput.value.trim();
-        if (newText) {
-          section.chores[index] = newText;
-          saveState();
-        }
-        renderSectionChores(page, section);
-        renderPrintablePages();
-        // Reattach event listeners after DOM is recreated
-        attachSectionEventListeners(page);
-      };
-      
-      choreText.querySelector('.save-edit-btn').addEventListener('click', saveEdit);
-      choreText.querySelector('.cancel-edit-btn').addEventListener('click', () => {
-        renderSectionChores(page, section);
-        // Reattach event listeners after DOM is recreated
-        attachSectionEventListeners(page);
-      });
-      editInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') saveEdit();
-      });
-      editInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          renderSectionChores(page, section);
-          // Reattach event listeners after DOM is recreated
-          attachSectionEventListeners(page);
-        }
-      });
-    });
-  });
+
+  // Edit/remove chore listeners are attached per-section by
+  // attachChoreItemListeners (called from renderSectionChores). Re-attaching
+  // them here would stack listeners on section-level buttons.
 }
 
 // Month picker state and functions (defined globally for accessibility)
@@ -1733,6 +1731,7 @@ function renderAll() {
   renderPageHint();
   renderPageCards();
   updateMonthPickerDisplay();
+  if (window.lucide) lucide.createIcons();
 }
 
 // ========================================
@@ -2007,18 +2006,9 @@ function setupEventListeners() {
 
   // Share-link banner wiring
   document.getElementById('share-save-btn').addEventListener('click', () => {
-    const name = prompt('Name this checklist:', 'Shared checklist');
-    if (!name) return;
-    const data = {
-      weekStartDay: state.weekStartDay,
-      pages: state.pages,
-      multiPageView: state.multiPageView,
-    };
-    const id = ChoreStorage.createEntry(name.trim(), data);
-    ChoreStorage.setCurrentId(id);
+    state.shareBannerMode = false;
     hideShareBanner();
-    saveState(); // now writes through to the new entry
-    if (typeof updateEditorTitleChip === 'function') updateEditorTitleChip();
+    saveState(); // auto-creates an entry under the current page title
   });
   document.getElementById('share-discard-btn').addEventListener('click', () => {
     hideShareBanner();
@@ -2043,67 +2033,10 @@ function setupEventListeners() {
       sectionIdCounter = 2;
       weekStartDaySelect.value = state.weekStartDay;
       updateMonthPickerDisplay();
-      saveState();
       ChoreStorage.setCurrentId(null);
-      updateEditorTitleChip();
+      saveState();
       renderAll();
     }
-  });
-
-  // Editor title chip + Save as
-  function updateEditorTitleChip() {
-    const chip = document.getElementById('entry-chip');
-    const nameEl = document.getElementById('entry-chip-name');
-    if (!chip || !nameEl) return;
-    const id = ChoreStorage.getCurrentId();
-    if (!id) {
-      chip.dataset.saved = 'false';
-      nameEl.textContent = 'Untitled draft';
-      return;
-    }
-    const row = ChoreStorage.getIndex().find(r => r.id === id);
-    chip.dataset.saved = 'true';
-    nameEl.textContent = row ? row.name : 'Untitled';
-  }
-  window.updateEditorTitleChip = updateEditorTitleChip;
-
-  document.getElementById('save-as-btn').addEventListener('click', () => {
-    const name = prompt('Name this checklist:');
-    if (!name) return;
-    const data = {
-      weekStartDay: state.weekStartDay,
-      pages: state.pages,
-      multiPageView: state.multiPageView,
-    };
-    const id = ChoreStorage.createEntry(name.trim(), data);
-    ChoreStorage.setCurrentId(id);
-    updateEditorTitleChip();
-  });
-
-  const chipEl = document.getElementById('entry-chip');
-  chipEl.addEventListener('click', () => {
-    const id = ChoreStorage.getCurrentId();
-    if (!id) {
-      document.getElementById('save-as-btn').click();
-      return;
-    }
-    const nameEl = document.getElementById('entry-chip-name');
-    nameEl.contentEditable = 'true';
-    nameEl.focus();
-    document.execCommand && document.execCommand('selectAll', false, null);
-  });
-  const chipNameEl = document.getElementById('entry-chip-name');
-  chipNameEl.addEventListener('blur', (e) => {
-    e.target.contentEditable = 'false';
-    const id = ChoreStorage.getCurrentId();
-    const newName = e.target.textContent.trim();
-    if (!id) return;
-    if (!newName) { updateEditorTitleChip(); return; }
-    ChoreStorage.renameEntry(id, newName);
-  });
-  chipNameEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
-    if (e.key === 'Escape') { e.preventDefault(); updateEditorTitleChip(); e.target.blur(); }
   });
 
   // Zoom controls
@@ -2175,7 +2108,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadState();
   renderAll();
   setupEventListeners();
-  if (typeof window.updateEditorTitleChip === 'function') window.updateEditorTitleChip();
   // Initialize zoom state after everything is set up
   setTimeout(() => {
     const zoomSlider = document.getElementById('zoom-slider');
