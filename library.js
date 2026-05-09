@@ -108,7 +108,10 @@
     menu.addEventListener('click', e => {
       const act = e.target.dataset.act; if (!act) return;
       if (act === 'open') location.href = `index.html?id=${id}`;
-      if (act === 'duplicate') { /* Task 8 */ }
+      if (act === 'duplicate') {
+        const newId = ChoreStorage.duplicateEntry(id);
+        if (newId) { render(); toast('Duplicated'); }
+      }
       if (act === 'delete') {
         if (confirm('Delete this checklist? This cannot be undone.')) {
           ChoreStorage.removeEntry(id); render(); toast('Deleted');
