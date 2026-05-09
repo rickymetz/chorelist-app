@@ -58,6 +58,38 @@
         e.stopPropagation();
         openMenu(cardEl, id);
       });
+
+      const nameEl = cardEl.querySelector('[data-action="rename"]');
+      nameEl.addEventListener('click', e => {
+        e.stopPropagation();
+        nameEl.contentEditable = 'true';
+        nameEl.focus();
+      });
+      nameEl.addEventListener('blur', () => {
+        nameEl.contentEditable = 'false';
+        const v = nameEl.textContent.trim();
+        if (!v) { render(); return; }
+        ChoreStorage.renameEntry(id, v);
+      });
+      nameEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); }
+        if (e.key === 'Escape') { e.preventDefault(); render(); }
+      });
+
+      const descEl = cardEl.querySelector('[data-action="describe"]');
+      descEl.addEventListener('click', e => {
+        e.stopPropagation();
+        descEl.contentEditable = 'true';
+        descEl.focus();
+      });
+      descEl.addEventListener('blur', () => {
+        descEl.contentEditable = 'false';
+        ChoreStorage.setEntryDescription(id, descEl.textContent.trim());
+      });
+      descEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); descEl.blur(); }
+        if (e.key === 'Escape') { e.preventDefault(); render(); }
+      });
     });
   }
 
