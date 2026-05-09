@@ -2113,3 +2113,14 @@ td {
 .library-link.primary {
   background: #f0d97a; padding: 10px 16px; border-radius: 6px; display: inline-block;
 }
+.lib-menu {
+  position: absolute; background: #fff; border: 1px solid #ccc; border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); padding: 4px; min-width: 140px; z-index: 100;
+  display: flex; flex-direction: column;
+}
+.lib-menu button {
+  text-align: left; padding: 8px 12px; border: none; background: transparent;
+  font: inherit; cursor: pointer; border-radius: 4px;
+}
+.lib-menu button:hover { background: #f0f0f0; }
+.lib-menu button[data-act="delete"] { color: #c33; }

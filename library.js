@@ -47,7 +47,47 @@
   }
 
   function bindCardEvents() {
-    // Filled in Task 6/7/8.
+    grid.querySelectorAll('.lib-card').forEach(cardEl => {
+      const id = cardEl.dataset.id;
+      cardEl.addEventListener('click', e => {
+        const action = e.target.dataset.action;
+        if (action === 'menu' || action === 'rename' || action === 'describe') return;
+        location.href = `index.html?id=${id}`;
+      });
+      cardEl.querySelector('[data-action="menu"]').addEventListener('click', e => {
+        e.stopPropagation();
+        openMenu(cardEl, id);
+      });
+    });
+  }
+
+  function openMenu(anchor, id) {
+    closeMenu();
+    const menu = document.createElement('div');
+    menu.className = 'lib-menu';
+    menu.innerHTML = `
+      <button data-act="open">Open</button>
+      <button data-act="duplicate">Duplicate</button>
+      <button data-act="delete">Delete</button>`;
+    document.body.appendChild(menu);
+    const r = anchor.getBoundingClientRect();
+    menu.style.top = `${window.scrollY + r.top + 36}px`;
+    menu.style.left = `${window.scrollX + r.right - 140}px`;
+    menu.addEventListener('click', e => {
+      const act = e.target.dataset.act; if (!act) return;
+      if (act === 'open') location.href = `index.html?id=${id}`;
+      if (act === 'duplicate') { /* Task 8 */ }
+      if (act === 'delete') {
+        if (confirm('Delete this checklist? This cannot be undone.')) {
+          ChoreStorage.removeEntry(id); render(); toast('Deleted');
+        }
+      }
+      closeMenu();
+    });
+    setTimeout(() => document.addEventListener('click', closeMenu, { once: true }), 0);
+  }
+  function closeMenu() {
+    document.querySelectorAll('.lib-menu').forEach(m => m.remove());
   }
 
   // Header buttons
