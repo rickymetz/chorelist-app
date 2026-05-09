@@ -1849,6 +1849,16 @@ function setupEventListeners() {
         endYear = currentYear;
         endMonth = currentMonth;
         break;
+      case 'next-2':
+      case 'next-3': {
+        const span = range === 'next-2' ? 2 : 3;
+        const endDate = new Date(currentYear, currentMonth + span - 1, 1);
+        startYear = currentYear;
+        startMonth = currentMonth;
+        endYear = endDate.getFullYear();
+        endMonth = endDate.getMonth();
+        break;
+      }
       case 'rest-of-year':
         startYear = currentYear;
         startMonth = currentMonth;
