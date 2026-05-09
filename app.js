@@ -2157,6 +2157,10 @@ function setupEventListeners() {
       }, 150);
     });
   }
+
+  window.addEventListener('chorestorage:quota', () => {
+    alert('Storage full — export and remove some entries from the library.');
+  }, { once: true });
 }
 
 // ========================================

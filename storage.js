@@ -22,6 +22,15 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function safeWrite(fn) {
+    try { fn(); }
+    catch (e) {
+      if (e && e.name === 'QuotaExceededError') {
+        window.dispatchEvent(new CustomEvent('chorestorage:quota'));
+      } else { throw e; }
+    }
+  }
+
   function getIndex()       { return readJSON(KEYS.INDEX, []); }
   function setIndex(idx)    { writeJSON(KEYS.INDEX, idx); }
   function entryKey(id)     { return KEYS.ENTRY_PREFIX + id; }
@@ -55,7 +64,7 @@
   // If id is null, writes to the legacy autosave bucket.
   function saveWorking(state, id) {
     if (id) {
-      setEntry(id, state);
+      safeWrite(() => setEntry(id, state));
       const counts = countsFromState(state);
       const idx = getIndex();
       const row = idx.find(r => r.id === id);
@@ -67,7 +76,7 @@
         ...counts,
       });
     } else {
-      writeJSON(KEYS.LEGACY_DRAFT, state);
+      safeWrite(() => writeJSON(KEYS.LEGACY_DRAFT, state));
     }
   }
 

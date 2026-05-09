@@ -3,6 +3,10 @@
   const empty = document.getElementById('library-empty');
   const toastEl = document.getElementById('toast');
 
+  window.addEventListener('chorestorage:quota', () => {
+    toast('Storage full — remove some entries.');
+  }, { once: true });
+
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.hidden = false;
