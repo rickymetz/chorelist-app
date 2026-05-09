@@ -5,7 +5,9 @@
 
   window.addEventListener('chorestorage:quota', () => {
     toast('Storage full — remove some entries.');
-  }, { once: true });
+  });
+
+  let activeMenuCloser = null;
 
   function toast(msg) {
     toastEl.textContent = msg;
@@ -47,7 +49,7 @@
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
   function bindCardEvents() {
@@ -98,6 +100,10 @@
   }
 
   function openMenu(anchor, id) {
+    if (anchor.dataset.menuOpen === 'true') {
+      closeMenu();
+      return;
+    }
     closeMenu();
     const menu = document.createElement('div');
     menu.className = 'lib-menu';
@@ -123,10 +129,17 @@
       }
       closeMenu();
     });
-    setTimeout(() => document.addEventListener('click', closeMenu, { once: true }), 0);
+    anchor.dataset.menuOpen = 'true';
+    activeMenuCloser = closeMenu;
+    setTimeout(() => document.addEventListener('click', activeMenuCloser), 0);
   }
   function closeMenu() {
     document.querySelectorAll('.lib-menu').forEach(m => m.remove());
+    document.querySelectorAll('[data-menu-open]').forEach(el => el.removeAttribute('data-menu-open'));
+    if (activeMenuCloser) {
+      document.removeEventListener('click', activeMenuCloser);
+      activeMenuCloser = null;
+    }
   }
 
   // Header buttons

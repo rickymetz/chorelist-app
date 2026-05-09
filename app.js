@@ -625,6 +625,10 @@ function loadState() {
     if (entry) {
       ChoreStorage.setCurrentId(idParam);
       saved = entry;
+    } else {
+      const cleanUrl = new URL(window.location);
+      cleanUrl.searchParams.delete('id');
+      window.history.replaceState({}, '', cleanUrl);
     }
   }
   if (!saved) {
@@ -2160,7 +2164,7 @@ function setupEventListeners() {
 
   window.addEventListener('chorestorage:quota', () => {
     alert('Storage full — export and remove some entries from the library.');
-  }, { once: true });
+  });
 }
 
 // ========================================
