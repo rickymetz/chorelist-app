@@ -585,6 +585,20 @@ function applyLoadedState(saved) {
   }
 }
 
+function showShareBanner() {
+  const el = document.getElementById('share-banner');
+  if (el) el.hidden = false;
+}
+function hideShareBanner() {
+  const el = document.getElementById('share-banner');
+  if (el) el.hidden = true;
+  state.shareBannerMode = false;
+  // Strip ?s= so subsequent autosave can route normally.
+  const url = new URL(window.location);
+  url.searchParams.delete('s');
+  window.history.replaceState({}, '', url);
+}
+
 function loadState() {
   const url = new URL(window.location);
   const idParam = url.searchParams.get('id');
@@ -601,6 +615,7 @@ function loadState() {
   if (urlState) {
     state.shareBannerMode = true;
     applyLoadedState(urlState);
+    showShareBanner();
     return;
   }
 
@@ -1985,6 +2000,27 @@ function setupEventListeners() {
 
   // Share button
   document.getElementById('share-btn').addEventListener('click', copyShareLink);
+
+  // Share-link banner wiring
+  document.getElementById('share-save-btn').addEventListener('click', () => {
+    const name = prompt('Name this checklist:', 'Shared checklist');
+    if (!name) return;
+    const data = {
+      weekStartDay: state.weekStartDay,
+      pages: state.pages,
+      multiPageView: state.multiPageView,
+    };
+    const id = ChoreStorage.createEntry(name.trim(), data);
+    ChoreStorage.setCurrentId(id);
+    hideShareBanner();
+    saveState(); // now writes through to the new entry
+    if (typeof updateEditorTitleChip === 'function') updateEditorTitleChip();
+  });
+  document.getElementById('share-discard-btn').addEventListener('click', () => {
+    hideShareBanner();
+    // Reload the editor's own last state.
+    location.search = '';
+  });
   
   // Copy Markdown button
   document.getElementById('copy-md-btn').addEventListener('click', copyMarkdown);

@@ -2045,3 +2045,17 @@ td {
   }
 }
 
+.share-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; background: #fff8e1; border-bottom: 1px solid #f0d97a;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+.share-banner[hidden] { display: none; }
+.share-banner-text { flex: 1; }
+.share-banner-btn {
+  border: 1px solid #c9b04a; background: #fff; padding: 6px 12px;
+  border-radius: 4px; cursor: pointer; font: inherit;
+}
+.share-banner-btn.primary { background: #f0d97a; }
+.share-banner-btn:hover { background: #f7e9a8; }
+
