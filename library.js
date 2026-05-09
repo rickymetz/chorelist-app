@@ -130,7 +130,33 @@
     location.href = 'index.html?new=1';
   });
 
-  // Import/export wired in Task 9.
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const data = ChoreStorage.exportAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chorelist-library-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  const fileInput = document.getElementById('import-file');
+  document.getElementById('import-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0]; if (!file) return;
+    try {
+      const text = await file.text();
+      const result = ChoreStorage.importAll(JSON.parse(text));
+      if (result.error) toast(`Import failed: ${result.error}`);
+      else toast(`Imported ${result.imported}${result.skipped ? `, skipped ${result.skipped}` : ''}`);
+      render();
+    } catch (e) {
+      toast('Import failed: invalid JSON');
+    } finally {
+      fileInput.value = '';
+    }
+  });
 
   render();
   window.LibraryUI = { render, toast };
