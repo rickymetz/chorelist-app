@@ -2,6 +2,12 @@
 // Home Checklist App - Multi-Page Edition
 // ========================================
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 // Default sections for a new page
 const DEFAULT_SECTIONS = [
   {
@@ -674,7 +680,7 @@ function generateSingleColumnDaily(section, weeks, weekCount) {
         ${section.chores.map(chore => `
           ${weeks.map((week, weekIdx) => `
             <tr class="${weekIdx > 0 ? 'week-row' : ''}">
-              ${weekIdx === 0 ? `<td class="chore-name" rowspan="${weekCount}">${chore}</td>` : ''}
+              ${weekIdx === 0 ? `<td class="chore-name" rowspan="${weekCount}">${escapeHtml(chore)}</td>` : ''}
               ${week.days.map(day => `
                 <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
                   ${day.inMonth ? `
@@ -747,7 +753,7 @@ function generateDoubleColumnDaily(section, weeks, weekCount) {
           const rightChore = rightChores[choreIdx];
           return weeks.map((week, weekIdx) => `
             <tr class="${weekIdx > 0 ? 'week-row' : ''}">
-              ${weekIdx === 0 ? `<td class="chore-name" rowspan="${weekCount}">${leftChore}</td>` : ''}
+              ${weekIdx === 0 ? `<td class="chore-name" rowspan="${weekCount}">${escapeHtml(leftChore)}</td>` : ''}
               ${week.days.map(day => `
                 <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''}">
                   ${day.inMonth ? `
@@ -758,7 +764,7 @@ function generateDoubleColumnDaily(section, weeks, weekCount) {
                 </td>
               `).join('')}
               ${weekIdx === 0 ? `<td class="column-separator" rowspan="${weekCount}"></td>` : ''}
-              ${weekIdx === 0 ? `<td class="chore-name ${rightChore === null ? 'orphan-chore' : ''}" rowspan="${weekCount}">${rightChore || ''}</td>` : ''}
+              ${weekIdx === 0 ? `<td class="chore-name ${rightChore === null ? 'orphan-chore' : ''}" rowspan="${weekCount}">${escapeHtml(rightChore || '')}</td>` : ''}
               ${week.days.map(day => `
                 <td class="check-cell ${!day.inMonth ? 'out-of-month' : ''} ${rightChore === null ? 'orphan-cell' : ''}">
                   ${day.inMonth ? `
@@ -809,7 +815,7 @@ function generateWeeklySection(section, weeks) {
   return `
     <section class="chore-section weekly-section">
       <div class="section-header">
-        <h2><strong>${section.title}</strong> <em>${section.subtitle}</em></h2>
+        <h2><strong>${escapeHtml(section.title)}</strong> <em>${escapeHtml(section.subtitle)}</em></h2>
       </div>
       <table class="weekly-table ${hideCheckboxes ? 'hide-checkboxes' : ''}">
         <thead>
@@ -828,7 +834,7 @@ function generateWeeklySection(section, weeks) {
         <tbody>
           ${section.chores.map(chore => `
             <tr>
-              <td class="chore-name">${chore}</td>
+              <td class="chore-name">${escapeHtml(chore)}</td>
               ${weeks.map(() => `
                 <td class="check-cell"><span class="check-area"></span></td>
               `).join('')}
@@ -852,7 +858,7 @@ function generateDailySection(section, weeks, weekCount) {
   return `
     <section class="chore-section daily-section">
       <div class="section-header">
-        <h2><strong>${section.title}</strong> <em>${section.subtitle}</em></h2>
+        <h2><strong>${escapeHtml(section.title)}</strong> <em>${escapeHtml(section.subtitle)}</em></h2>
       </div>
       ${section.doubleColumn ? generateDoubleColumnDaily(section, weeks, weekCount) : generateSingleColumnDaily(section, weeks, weekCount)}
     </section>
@@ -862,13 +868,13 @@ function generateDailySection(section, weeks, weekCount) {
 function generateNotesSection(section) {
   const lineCount = section.lineCount || 5;
   const lines = Array(lineCount).fill('').map(() => '<div class="note-line"></div>').join('');
-  const subtitleHtml = section.subtitle ? ` <em>${section.subtitle}</em>` : '';
+  const subtitleHtml = section.subtitle ? ` <em>${escapeHtml(section.subtitle)}</em>` : '';
   
   if (section.doubleColumn) {
     return `
       <section class="chore-section notes-section">
         <div class="section-header">
-          <h2><strong>${section.title}</strong>${subtitleHtml}</h2>
+          <h2><strong>${escapeHtml(section.title)}</strong>${subtitleHtml}</h2>
         </div>
         <div class="notes-columns">
           <div class="notes-column">${lines}</div>
@@ -891,7 +897,7 @@ function generateNotesSection(section) {
 }
 
 function generateMonthlySection(section) {
-  const subtitleHtml = section.subtitle ? ` <em>${section.subtitle}</em>` : '';
+  const subtitleHtml = section.subtitle ? ` <em>${escapeHtml(section.subtitle)}</em>` : '';
   const blankRows = section.blankRows || 0;
   const hideCheckboxes = section.hideCheckboxes || false;
   
@@ -900,7 +906,7 @@ function generateMonthlySection(section) {
     const gridItems = section.chores.map(chore => `
       <div class="monthly-grid-item">
         <span class="checkbox"></span>
-        <span class="monthly-label">${chore}</span>
+        <span class="monthly-label">${escapeHtml(chore)}</span>
       </div>
     `).join('');
     
@@ -915,7 +921,7 @@ function generateMonthlySection(section) {
     return `
       <section class="chore-section monthly-section">
         <div class="section-header">
-          <h2><strong>${section.title}</strong>${subtitleHtml}</h2>
+          <h2><strong>${escapeHtml(section.title)}</strong>${subtitleHtml}</h2>
         </div>
         <div class="monthly-grid ${hideCheckboxes ? 'hide-checkboxes' : ''}">
           ${gridItems}
@@ -928,7 +934,7 @@ function generateMonthlySection(section) {
   // Single column list layout
   const listItems = section.chores.map(chore => `
     <tr>
-      <td class="monthly-goal">${chore}</td>
+      <td class="monthly-goal">${escapeHtml(chore)}</td>
       <td class="monthly-check"><span class="checkbox"></span></td>
     </tr>
   `).join('');
@@ -1000,7 +1006,7 @@ function generatePrintablePage(page) {
   
   div.innerHTML = `
     <header class="page-header">
-      <h1>${page.title}</h1>
+      <h1>${escapeHtml(page.title)}</h1>
       <span class="month-display">${getMonthYear(date)}</span>
     </header>
     ${sectionsHtml}
@@ -1109,7 +1115,7 @@ function renderPageCards() {
     <div class="details-section">
       <div class="detail-field">
         <label>Page Title</label>
-        <input type="text" class="page-title-input" data-page-id="${page.id}" value="${page.title}" placeholder="Enter title...">
+        <input type="text" class="page-title-input" data-page-id="${page.id}" value="${escapeHtml(page.title)}" placeholder="Enter title...">
       </div>
       <div class="type-scale-row">
         <div class="detail-field compact">
@@ -1171,8 +1177,8 @@ function renderPageSections(page) {
       </div>
       ${section.type === 'notes' ? `
         <div class="section-title-inputs">
-          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Label..." value="${section.title}">
-          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${section.subtitle || ''}">
+          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Label..." value="${escapeHtml(section.title)}">
+          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${escapeHtml(section.subtitle || '')}">
         </div>
         <div class="section-options layout-toggle">
           <span class="layout-icon" title="Single column"><i data-lucide="rectangle-vertical"></i></span>
@@ -1188,8 +1194,8 @@ function renderPageSections(page) {
         </div>
       ` : section.type === 'monthly' ? `
         <div class="section-title-inputs">
-          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Section title..." value="${section.title}">
-          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${section.subtitle || ''}">
+          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Section title..." value="${escapeHtml(section.title)}">
+          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${escapeHtml(section.subtitle || '')}">
         </div>
         <div class="section-options layout-toggle">
           <span class="layout-icon" title="List"><i data-lucide="list"></i></span>
@@ -1217,8 +1223,8 @@ function renderPageSections(page) {
         </div>
       ` : `
         <div class="section-title-inputs">
-          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Section title..." value="${section.title}">
-          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${section.subtitle}">
+          <input type="text" class="section-title" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Section title..." value="${escapeHtml(section.title)}">
+          <input type="text" class="section-subtitle" data-page-id="${page.id}" data-section-id="${section.id}" placeholder="Subtitle..." value="${escapeHtml(section.subtitle)}">
         </div>
         ${section.type === 'daily' ? `
           <div class="section-options layout-toggle">
@@ -1283,7 +1289,7 @@ function renderSectionChores(page, section) {
     li.dataset.index = index;
     li.innerHTML = `
       <span class="drag-handle"><i data-lucide="grip-vertical"></i></span>
-      <span class="chore-text">${chore}</span>
+      <span class="chore-text">${escapeHtml(chore)}</span>
       <div class="chore-actions">
         <button class="edit-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Edit"><i data-lucide="pencil"></i></button>
         <button class="remove-chore-btn" data-page-id="${page.id}" data-section-id="${section.id}" data-index="${index}" title="Remove"><i data-lucide="x"></i></button>
@@ -1329,7 +1335,7 @@ function attachChoreItemListeners(page, section) {
       const currentText = section.chores[idx];
 
       choreText.innerHTML = `
-        <input type="text" class="edit-chore-input" value="${currentText}">
+        <input type="text" class="edit-chore-input" value="${escapeHtml(currentText)}">
         <div class="edit-controls">
           <button class="save-edit-btn"><i data-lucide="check"></i></button>
           <button class="cancel-edit-btn"><i data-lucide="x"></i></button>
@@ -2024,19 +2030,36 @@ function setupEventListeners() {
     window.print();
   });
 
-  // Reset button
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (confirm('Reset everything to defaults?')) {
-      state.weekStartDay = 1;
-      state.pages = [createDefaultPage('page-1', 0)];
-      pageIdCounter = 2;
-      sectionIdCounter = 2;
-      weekStartDaySelect.value = state.weekStartDay;
-      updateMonthPickerDisplay();
-      ChoreStorage.setCurrentId(null);
-      saveState();
-      renderAll();
+  // Reset button — two-click confirm to avoid accidental wipes.
+  const resetBtn = document.getElementById('reset-btn');
+  let resetArmed = false;
+  let resetArmedTimer = null;
+  const disarmReset = () => {
+    resetArmed = false;
+    resetBtn.classList.remove('armed');
+    resetBtn.innerHTML = '<i data-lucide="rotate-ccw"></i> Reset';
+    if (window.lucide) lucide.createIcons();
+    if (resetArmedTimer) { clearTimeout(resetArmedTimer); resetArmedTimer = null; }
+  };
+  resetBtn.addEventListener('click', () => {
+    if (!resetArmed) {
+      resetArmed = true;
+      resetBtn.classList.add('armed');
+      resetBtn.innerHTML = '<i data-lucide="rotate-ccw"></i> Click again to reset';
+      if (window.lucide) lucide.createIcons();
+      resetArmedTimer = setTimeout(disarmReset, 3000);
+      return;
     }
+    disarmReset();
+    state.weekStartDay = 1;
+    state.pages = [createDefaultPage('page-1', 0)];
+    pageIdCounter = 2;
+    sectionIdCounter = 2;
+    weekStartDaySelect.value = state.weekStartDay;
+    updateMonthPickerDisplay();
+    ChoreStorage.setCurrentId(null);
+    saveState();
+    renderAll();
   });
 
   // Zoom controls

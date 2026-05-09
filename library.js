@@ -117,18 +117,33 @@
     menu.style.top = `${window.scrollY + r.top + 36}px`;
     menu.style.left = `${window.scrollX + r.right - 140}px`;
     menu.addEventListener('click', e => {
-      const act = e.target.dataset.act; if (!act) return;
-      if (act === 'open') location.href = `index.html?id=${id}`;
+      const btn = e.target.closest('[data-act]');
+      const act = btn && btn.dataset.act; if (!act) return;
+      if (act === 'open') { location.href = `index.html?id=${id}`; closeMenu(); return; }
       if (act === 'duplicate') {
         const newId = ChoreStorage.duplicateEntry(id);
         if (newId) { render(); toast('Duplicated'); }
+        closeMenu();
+        return;
       }
       if (act === 'delete') {
-        if (confirm('Delete this checklist? This cannot be undone.')) {
+        if (btn.dataset.armed === 'true') {
           ChoreStorage.removeEntry(id); render(); toast('Deleted');
+          closeMenu();
+        } else {
+          btn.dataset.armed = 'true';
+          btn.textContent = 'Click again to delete';
+          btn.classList.add('armed');
+          // Disarm if user clicks elsewhere or after 3s
+          setTimeout(() => {
+            if (btn.isConnected) {
+              btn.dataset.armed = 'false';
+              btn.textContent = 'Delete';
+              btn.classList.remove('armed');
+            }
+          }, 3000);
         }
       }
-      closeMenu();
     });
     anchor.dataset.menuOpen = 'true';
     activeMenuCloser = closeMenu;

@@ -314,6 +314,17 @@ body {
   background: var(--paper-warm);
 }
 
+.nav-actions .reset-btn.armed {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent) !important;
+}
+
+.lib-menu button.armed {
+  background: #c64a32;
+  color: #fff;
+}
+
 .sub-nav {
   flex-shrink: 0;
   z-index: 99;
