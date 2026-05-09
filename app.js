@@ -77,7 +77,8 @@ function createDefaultPage(id, monthOffset = 0) {
 let state = {
   weekStartDay: 1, // 0=Sunday, 1=Monday, 6=Saturday
   pages: [createDefaultPage('page-1', 0)],
-  multiPageView: false // false = single page, true = multi-page grid
+  multiPageView: false, // false = single page, true = multi-page grid
+  shareBannerMode: false
 };
 
 // Generate unique IDs
@@ -166,9 +167,11 @@ function saveState() {
   const data = {
     weekStartDay: state.weekStartDay,
     pages: state.pages,
-    multiPageView: state.multiPageView
+    multiPageView: state.multiPageView,
   };
-  localStorage.setItem('homeChecklist', JSON.stringify(data));
+  if (!state.shareBannerMode) {
+    ChoreStorage.saveWorking(data, ChoreStorage.getCurrentId());
+  }
   updateUrlWithState();
 }
 
@@ -548,52 +551,75 @@ function copyMarkdown() {
   });
 }
 
-function loadState() {
-  // Check URL first (for shared links)
-  const urlState = loadStateFromUrl();
-  const saved = urlState || (localStorage.getItem('homeChecklist') ? JSON.parse(localStorage.getItem('homeChecklist')) : null);
-  
-  if (saved) {
-    state.weekStartDay = saved.weekStartDay !== undefined ? saved.weekStartDay : 1;
-    state.multiPageView = saved.multiPageView !== undefined ? saved.multiPageView : false;
-    
-    if (saved.pages && saved.pages.length > 0) {
-      state.pages = saved.pages;
-      // Find highest IDs for counters and ensure baseSize minimum
-      state.pages.forEach(page => {
-        const pageNum = parseInt(page.id.split('-')[1]) || 0;
-        if (pageNum >= pageIdCounter) pageIdCounter = pageNum + 1;
-        
-        // Ensure baseSize is at least 6
-        if (page.baseSize !== undefined) {
-          page.baseSize = Math.max(6, page.baseSize);
-        }
-        
-        page.sections.forEach(s => {
-          const num = parseInt(s.id.split('-')[1]) || 0;
-          if (num >= sectionIdCounter) sectionIdCounter = num + 1;
-        });
+function applyLoadedState(saved) {
+  state.weekStartDay = saved.weekStartDay !== undefined ? saved.weekStartDay : 1;
+  state.multiPageView = saved.multiPageView !== undefined ? saved.multiPageView : false;
+
+  if (saved.pages && saved.pages.length > 0) {
+    state.pages = saved.pages;
+    // Find highest IDs for counters and ensure baseSize minimum
+    state.pages.forEach(page => {
+      const pageNum = parseInt(page.id.split('-')[1]) || 0;
+      if (pageNum >= pageIdCounter) pageIdCounter = pageNum + 1;
+
+      // Ensure baseSize is at least 6
+      if (page.baseSize !== undefined) {
+        page.baseSize = Math.max(6, page.baseSize);
+      }
+
+      page.sections.forEach(s => {
+        const num = parseInt(s.id.split('-')[1]) || 0;
+        if (num >= sectionIdCounter) sectionIdCounter = num + 1;
       });
-    } else if (saved.sections) {
-      // Migrate from old single-page format
-      state.pages = [{
-        id: 'page-1',
-        title: saved.title || 'Home Checklist',
-        month: saved.startMonth || new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
-        baseSize: Math.max(6, saved.baseSize || 10),
-        scaleRatio: saved.scaleRatio || 1.250,
-        sections: saved.sections
-      }];
-    }
-    
-    // If loaded from URL, save to localStorage too
-    if (urlState) {
-      localStorage.setItem('homeChecklist', JSON.stringify({
-        weekStartDay: state.weekStartDay,
-        pages: state.pages
-      }));
+    });
+  } else if (saved.sections) {
+    // Migrate from old single-page format
+    state.pages = [{
+      id: 'page-1',
+      title: saved.title || 'Home Checklist',
+      month: saved.startMonth || new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0'),
+      baseSize: Math.max(6, saved.baseSize || 10),
+      scaleRatio: saved.scaleRatio || 1.250,
+      sections: saved.sections
+    }];
+  }
+}
+
+function loadState() {
+  const url = new URL(window.location);
+  const idParam = url.searchParams.get('id');
+  const newParam = url.searchParams.get('new');
+
+  if (newParam) {
+    ChoreStorage.setCurrentId(null);
+    state.shareBannerMode = false;
+    return; // keep defaults
+  }
+
+  // Share-link path — banner wiring comes in Task 3.
+  const urlState = loadStateFromUrl();
+  if (urlState) {
+    state.shareBannerMode = true;
+    applyLoadedState(urlState);
+    return;
+  }
+
+  let saved = null;
+  if (idParam) {
+    const entry = ChoreStorage.getEntry(idParam);
+    if (entry) {
+      ChoreStorage.setCurrentId(idParam);
+      saved = entry;
     }
   }
+  if (!saved) {
+    const currentId = ChoreStorage.getCurrentId();
+    if (currentId) saved = ChoreStorage.getEntry(currentId);
+  }
+  if (!saved) {
+    saved = JSON.parse(localStorage.getItem('homeChecklist') || 'null');
+  }
+  if (saved) applyLoadedState(saved);
 }
 
 // ========================================
