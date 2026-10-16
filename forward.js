@@ -11,18 +11,26 @@
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
 
+  // Every page of an old chart is the same template; the new app reads the
+  // first and how many months there were. Sending one keeps the link short
+  // enough for a big library (browsers refuse addresses of a few MB).
+  function slim(state) {
+    var pages = (state && state.pages) || [];
+    return { weekStartDay: state && state.weekStartDay, pages: pages.slice(0, 1), n: pages.length };
+  }
+
   function bundle() {
     var index = readJSON("chorelist.library.index") || [];
     var entries = [];
     for (var i = 0; i < index.length; i++) {
       var row = index[i];
       var state = row && readJSON("chorelist.library.entry." + row.id);
-      if (state) entries.push({ id: row.id, name: row.name, modifiedAt: row.modifiedAt, state: state });
+      if (state) entries.push({ id: row.id, name: row.name, modifiedAt: row.modifiedAt, state: slim(state) });
     }
     // The autosave from before the library existed.
     var draft = readJSON("homeChecklist");
     if (!entries.length && draft && draft.pages) {
-      entries.push({ id: "draft", name: (draft.pages[0] && draft.pages[0].title) || "Home Checklist", modifiedAt: Date.now(), state: draft });
+      entries.push({ id: "draft", name: (draft.pages[0] && draft.pages[0].title) || "Home Checklist", modifiedAt: Date.now(), state: slim(draft) });
     }
     return entries.length ? { version: 1, entries: entries } : null;
   }
