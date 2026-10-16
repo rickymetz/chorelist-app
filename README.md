@@ -1,39 +1,17 @@
-# Home Checklist
+# ChoreList Manager has moved
 
-A printable household chore checklist generator with customizable daily, weekly, and monthly sections.
+It's now **Chore Chart**, redesigned and rebuilt, at
+**[rickymetz.com/ideas/chore-chart](https://rickymetz.com/ideas/chore-chart/)**.
+Its source lives in [rickymetz/rickymetz.com](https://github.com/rickymetz/rickymetz.com)
+under `public/ideas/chore-chart/`.
 
-## Features
+This repository now only serves a forwarding page at the old address
+(`index.html` and `library.html`, both running `forward.js`):
 
-- **Customizable Sections**: Add daily, weekly, monthly, and notes sections
-- **Multi-page Support**: Generate checklists for multiple months
-- **Print-Ready**: Optimized for printing with proper page breaks
-- **Shareable Links**: Share your custom checklist via URL
-- **Markdown Export**: Copy your checklist as Markdown
-- **Flexible Layout**: Single or double column layouts
-- **Zoom Controls**: Adjust view for better readability
+- Charts saved in the old app's library are carried over in the link's
+  `#import=` hash (the old "Export all" format) and imported once by the
+  new app.
+- Old share links (`?s=…`) are passed along as they are; the new app reads
+  them.
 
-## Usage
-
-Visit the [live site](https://rickymetz.github.io/chorelist-app/) to start creating your checklist.
-
-1. Select your starting month
-2. Choose when your week starts (Monday, Sunday, or Saturday)
-3. Customize sections and add chores
-4. Generate pages for the desired time range
-5. Print or share your checklist
-
-## Development
-
-```bash
-npm install
-npm start
-```
-
-The app will be available at `http://localhost:3000`.
-
-## Technology
-
-- Pure vanilla JavaScript (no frameworks)
-- LocalStorage for persistence
-- URL parameters for sharing
-- Print-optimized CSS
+The old app itself is in this repository's history, up to `cc60acc`.
